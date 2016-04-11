@@ -8,6 +8,8 @@ import numpy as np
 import scipy.misc
 import scipy.io
 import matplotlib.pyplot as plt
+from find_3d_poitns import *
+from plot_3d import *
 
 
 def reconstruct_3d(name, plot=True):
@@ -34,6 +36,7 @@ def reconstruct_3d(name, plot=True):
     # matches[i,0:2] is a point in the first image
     # matches[i,2:4] is the corresponding point in the second image
     matches = np.loadtxt(os.path.join(data_dir, "{}_matches.txt".format(name)))
+
 
     # visualize matches (disable or enable this whenever you want)
     if plot:
@@ -84,6 +87,10 @@ def reconstruct_3d(name, plot=True):
     P2 = np.dot(K2, np.concatenate([R2, t2[:, None]], axis=1))
 
     # compute the 3D points with the final P2
-    points = find_3d_points()
+    
+    x1 = matches[:,:2]
+    x2 = matches[:,2:]
+    X, 3d_err = find_3d_points(K1, K2, R, t, x1, x2)
 
-    plot_3d()
+    # Plot points along with camera position and orientation
+    plot_3d(K1, K2, R, t, X)
