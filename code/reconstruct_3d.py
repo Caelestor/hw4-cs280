@@ -73,7 +73,7 @@ def reconstruct_3d(name, plot=True):
     t2 = t[ti[j]]
     R2 = R[ri[j]]
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
-
+    
     # compute the 3D points with the final P2
     (points, err) = find_3d_points_final(K1,K2,P1,P2, matches)
     print err
@@ -115,20 +115,17 @@ def fundamental_matrix(matches):
     image1 = np.dot(T1, image1.T).T  
     image2 = np.dot(T2, image2.T).T      
     
-      
-    points = np.random.choice(len(matches), 20)
-    A = np.zeros((20, 9))
+    #points = np.random.choice(len(matches), len(matches))
+    A = np.zeros((len(matches), 9))
     #print points
 
-    n = 0
+    # Create matrix A
 
-    # Create the 8-point matrix
-
-    for i in points:
+    for i in range(len(matches)):
         p1 = image1[i]
         p2 = image2[i]
-        A[n] = [p1[0]*p2[0], p1[1]*p2[0], p2[0], p1[0]*p2[1], p1[1]*p1[0], p2[1], p1[0], p1[1], 1]
-        n = n + 1
+        A[i] = [p1[0]*p2[0], p1[1]*p2[0], p2[0], p1[0]*p2[1], p1[1]*p1[0], p2[1], p1[0], p1[1], 1]
+        #n = n + 1
 
     # Use SVD to solve Af = 0. Given A = USV^T, the last column of V is the solution.
     # http://www.cse.psu.edu/~rtc12/CSE486/lecture20_6pp.pdf 
@@ -144,8 +141,7 @@ def fundamental_matrix(matches):
     sf[2] = 0
     final = np.dot(np.dot(uf, np.diag(sf)),vf)
     final = np.dot(T2.T, final, T1)
-    #print final
-    #return (final, 0)   
+    print final 
     
     # Compute Residuals
     residual = 0
@@ -277,4 +273,4 @@ def plot_3d(K1, K2, R, t, X):
     plt.show()
     
 reconstruct_3d('house')
-#reconstruct_3d('library')
+reconstruct_3d('library')
