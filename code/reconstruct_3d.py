@@ -39,7 +39,6 @@ def reconstruct_3d(name, plot=True):
     # compute the essential matrix
     E = np.dot(np.dot(K2.T, F), K1)
     
-
     # compute the rotation and translation matrices
     (R, t) = find_rotation_translation(E)
 
@@ -58,8 +57,8 @@ def reconstruct_3d(name, plot=True):
         for ri, R2 in enumerate(R):
             R2 = R[ri]
             P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
-            print(R2)
-            print(t2)
+            #print(R2)
+            #print(t2)
             points_3d, errs[ti, ri] = find_3d_points(K1,K2,R2,t2,matches)
 
             Z1 = points_3d[:, 2]
@@ -79,6 +78,7 @@ def reconstruct_3d(name, plot=True):
     print err
 
     plot_3d(K1,K2,R,t,points)
+    
 
 """ We find the fundamental matrix using the 8-Point algorithm """
     
@@ -97,11 +97,12 @@ def fundamental_matrix(matches):
 
     T1 = np.zeros((3, 3))
     T2 = np.zeros((3, 3))   
-    T1[0] = (1.0/(std1*std1), 0, -1*m1[0])
-    T1[1] = (0, 1.0/(std1*std1), -1*m1[1])
+
+    T1[0] = (1.0/std1, 0, -1*m1[0]/std1)
+    T1[1] = (0, 1.0/std1, -1*m1[1]/std1)
     T1[2] = (0, 0, 1)
-    T2[0] = (1.0/(std2*std2), 0, -1*m2[0])
-    T2[1] = (0, 1.0/(std2*std2), -1*m2[1])
+    T2[0] = (1.0/std2, 0, -1*m2[0]/std2)
+    T2[1] = (0, 1.0/std2, -1*m2[1]/std2)
     T2[2] = (0, 0, 1)
 
     # Normalization
@@ -110,11 +111,14 @@ def fundamental_matrix(matches):
     image1 = np.append(image1, onecoords, axis=1)    
     image2 = np.append(image2, onecoords, axis=1) 
 
-    image1 = np.dot(image1, T1.T)    
-    image2 = np.dot(image1, T1.T)      
+    image1 = np.dot(T1, image1.T).T  
+    image2 = np.dot(T2, image2.T).T      
     
-    points = np.random.choice(len(matches), 8)
-    A = np.zeros((8, 9))
+      
+    points = np.random.choice(len(matches), 20)
+    A = np.zeros((20, 9))
+    #print points
+
     n = 0
 
     # Create the 8-point matrix
@@ -132,7 +136,8 @@ def fundamental_matrix(matches):
     f = va.T[:,-1]
     f = np.reshape(f, (3, 3))
 
-    # Use SVD to reduce F to rank 2 and Denormalize
+    # Use SVD to reduce f to rank 2 and Denormalize
+    # final is the rank-2 Fundamental matrix
 
     uf, sf, vf = np.linalg.svd(f, full_matrices=True)
     sf[2] = 0
@@ -149,11 +154,19 @@ def fundamental_matrix(matches):
         numerator = np.abs(np.dot(np.dot(p2, final), p1.T))
         d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
         d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
+<<<<<<< HEAD
         error = numerator/(d1*d1) + numerator/(d2*d2)
         #print numerator, d1, d2, error
         residual = residual + error
     print(np.mean(residual))
     return (final, residual/(2*len(matches)))
+=======
+        error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
+        #print numerator, d1, d2, error
+        residual += error
+    residual /= 2*len(matches)
+    return (final, residual)
+>>>>>>> f908bc4ca35f13d593ebc8046866d55f27d3544a
 
 def find_rotation_translation(E):
 
