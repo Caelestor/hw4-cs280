@@ -46,7 +46,7 @@ def reconstruct_3d(name, plot=True):
 
     # compute the rotation and translation matrices
     (R, t) = find_rotation_translation(E)
-"""
+
     # Find R2 and t2 from R, t such that largest number of points lie in front
     # of the image planes of the two cameras
     P1 = np.dot(K1, np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1))
@@ -61,9 +61,10 @@ def reconstruct_3d(name, plot=True):
         t2 = t[ti]
         for ri, R2 in enumerate(R):
             R2 = R[ri]
-            P2 = np.dot(K2, np.concatenate([R2, t2[:, None]], axis=1))
-
-            points_3d, errs[ti, ri] = find_3d_points()
+            P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
+            print(R2)
+            print(t2)
+            points_3d, errs[ti, ri] = find_3d_points(K1,K2,R2,t2,matches)
 
             Z1 = points_3d[:, 2]
             Z2 = (np.dot(R2[2], points_3d.T) + t2[2]).T
@@ -75,13 +76,12 @@ def reconstruct_3d(name, plot=True):
 
     t2 = t[ti[j]]
     R2 = R[ri[j]]
-    P2 = np.dot(K2, np.concatenate([R2, t2[:, None]], axis=1))
+    P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
 
     # compute the 3D points with the final P2
-    points = find_3d_points()
+    points = find_3d_points(K1,K2,R2,t2,matches)
 
-    plot_3d()
-    """
+    plot_3d(K1,K2,R,t,points)
 
 """ We find the fundamental matrix using the 8-Point algorithm """
     
@@ -189,7 +189,7 @@ def find_rotation_translation(E):
     sign = [1,-1]
     rot = [RCW90_t,RCCW90_t]
     for s in sign:
-        t.append(s*U[:,2])
+        t.append(np.transpose(np.matrix(s*U[:,2])))
         for r in rot:
             R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
             R.append(R_temp)
@@ -203,13 +203,15 @@ def find_rotation_translation(E):
     return R, t
 
 
-def find_3d_points( K1, K2, R, t, x1, x2 ):
+def find_3d_points( K1, K2, R, t, matches ):
 
     # K1, K2, are the (3 x 3) camera matrices for the two cameras C1, C2
     # R is the (3 x 3) rotation matrix describing the rotation from C2 to C1
     # t = (x_0, y_0, z_0) is the translation vector denoting the position of C1 in C2's coordinate
     # x1, x2 are (N x 2) arrays denoting the the position of reference points in each of the two images
 
+    x1 = matches[:,0:2]
+    x2 = matches[:,2:4]
     # Camera matrix for first camera with rotation and translation being the identity
     I0 = np.hstack( (np.identity(3), np.zeros((3,1)) ) ) 
     P1 = np.dot(K1, I0)
