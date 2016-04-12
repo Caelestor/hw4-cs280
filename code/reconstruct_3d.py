@@ -154,19 +154,12 @@ def fundamental_matrix(matches):
         numerator = np.abs(np.dot(np.dot(p2, final), p1.T))
         d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
         d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
-<<<<<<< HEAD
-        error = numerator/(d1*d1) + numerator/(d2*d2)
-        #print numerator, d1, d2, error
-        residual = residual + error
-    print(np.mean(residual))
-    return (final, residual/(2*len(matches)))
-=======
+
         error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
         #print numerator, d1, d2, error
         residual += error
     residual /= 2*len(matches)
     return (final, residual)
->>>>>>> f908bc4ca35f13d593ebc8046866d55f27d3544a
 
 def find_rotation_translation(E):
 
