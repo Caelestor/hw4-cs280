@@ -41,7 +41,6 @@ def reconstruct_3d(name, plot=True):
     # compute the rotation and translation matrices
     (R, t) = find_rotation_translation(E)
 
-    """
     # Find R2 and t2 from R, t such that largest number of points lie in front
     # of the image planes of the two cameras
     P1 = np.dot(K1, np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1))
@@ -57,8 +56,8 @@ def reconstruct_3d(name, plot=True):
         for ri, R2 in enumerate(R):
             R2 = R[ri]
             P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
-            print(R2)
-            print(t2)
+            #print(R2)
+            #print(t2)
             points_3d, errs[ti, ri] = find_3d_points(K1,K2,R2,t2,matches)
 
             Z1 = points_3d[:, 2]
@@ -78,7 +77,6 @@ def reconstruct_3d(name, plot=True):
 
     plot_3d(K1,K2,R,t,points)
     
-    """
 
 """ We find the fundamental matrix using the 8-Point algorithm """
     
@@ -97,11 +95,12 @@ def fundamental_matrix(matches):
 
     T1 = np.zeros((3, 3))
     T2 = np.zeros((3, 3))   
-    T1[0] = (1.0/(std1*std1), 0, -1*m1[0])
-    T1[1] = (0, 1.0/(std1*std1), -1*m1[1])
+
+    T1[0] = (1.0/std1, 0, -1*m1[0]/std1)
+    T1[1] = (0, 1.0/std1, -1*m1[1]/std1)
     T1[2] = (0, 0, 1)
-    T2[0] = (1.0/(std2*std2), 0, -1*m2[0])
-    T2[1] = (0, 1.0/(std2*std2), -1*m2[1])
+    T2[0] = (1.0/std2, 0, -1*m2[0]/std2)
+    T2[1] = (0, 1.0/std2, -1*m2[1]/std2)
     T2[2] = (0, 0, 1)
 
     # Normalization
@@ -110,11 +109,13 @@ def fundamental_matrix(matches):
     image1 = np.append(image1, onecoords, axis=1)    
     image2 = np.append(image2, onecoords, axis=1) 
 
-    image1 = np.dot(image1, T1.T)    
-    image2 = np.dot(image1, T1.T)      
+    image1 = np.dot(T1, image1.T).T  
+    image2 = np.dot(T2, image2.T).T      
     
-    points = np.random.choice(len(matches), 8)
-    A = np.zeros((8, 9))
+    #print np.mean(image1, axis=0), np.mean(image2, axis=0), np.std(image1), np.std(image2)
+      
+    points = np.random.choice(len(matches), 20)
+    A = np.zeros((20, 9))
     print points
     n = 0
 
@@ -250,4 +251,4 @@ def plot_3d(K1, K2, R, t, X):
     plt.show()
     
 reconstruct_3d('house')
-reconstruct_3d('library')
+#reconstruct_3d('library')
