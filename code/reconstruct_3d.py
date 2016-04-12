@@ -72,10 +72,12 @@ def reconstruct_3d(name, plot=True):
     R2 = R[ri[j]]
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
 
+    """
     # compute the 3D points with the final P2
     points = find_3d_points(K1,K2,R2,t2,matches)
 
     plot_3d(K1,K2,R,t,points)
+    """
     
 
 """ We find the fundamental matrix using the 8-Point algorithm """
@@ -114,18 +116,18 @@ def fundamental_matrix(matches):
     
     #print np.mean(image1, axis=0), np.mean(image2, axis=0), np.std(image1), np.std(image2)
       
-    points = np.random.choice(len(matches), 20)
-    A = np.zeros((20, 9))
-    print points
-    n = 0
+    #points = np.random.choice(len(matches), len(matches))
+    A = np.zeros((len(matches), 9))
+    #print points
+    #n = 0
 
     # Create the 8-point matrix
 
-    for i in points:
+    for i in range(len(matches)):
         p1 = image1[i]
         p2 = image2[i]
-        A[n] = [p1[0]*p2[0], p1[1]*p2[0], p2[0], p1[0]*p2[1], p1[1]*p1[0], p2[1], p1[0], p1[1], 1]
-        n = n + 1
+        A[i] = [p1[0]*p2[0], p1[1]*p2[0], p2[0], p1[0]*p2[1], p1[1]*p1[0], p2[1], p1[0], p1[1], 1]
+        #n = n + 1
 
     # Use SVD to solve Af = 0. Given A = USV^T, the last column of V is the solution.
     # http://www.cse.psu.edu/~rtc12/CSE486/lecture20_6pp.pdf 
@@ -141,8 +143,7 @@ def fundamental_matrix(matches):
     sf[2] = 0
     final = np.dot(np.dot(uf, np.diag(sf)),vf)
     final = np.dot(T2.T, final, T1)
-    print final
-    #return (final, 0)   
+    print final 
     
     # Compute Residuals
     residual = 0
@@ -251,4 +252,4 @@ def plot_3d(K1, K2, R, t, X):
     plt.show()
     
 reconstruct_3d('house')
-#reconstruct_3d('library')
+reconstruct_3d('library')
