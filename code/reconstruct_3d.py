@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-@author: richiou
-"""
-
 import os
 import numpy as np
 import scipy.misc
@@ -43,10 +38,10 @@ def reconstruct_3d(name, plot=True):
     # compute the essential matrix
     E = np.dot(np.dot(K2.T, F), K1)
     
-"""
-    # compute the rotation and translation matrices
-    (R, t) = find_rotation_translation()
 
+    # compute the rotation and translation matrices
+    (R, t) = find_rotation_translation(E)
+"""
     # Find R2 and t2 from R, t such that largest number of points lie in front
     # of the image planes of the two cameras
     P1 = np.dot(K1, np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1))
@@ -88,12 +83,15 @@ def reconstruct_3d(name, plot=True):
 def fundamental_matrix(matches):
 
     # Derive the normalization matrices
+
     image1 = matches[:,0:2]
     image2 = matches[:,2:4]
     m1 = np.mean(image1, axis=0)
     m2 = np.mean(image2, axis=0)       
     std1 = np.std(image1)
     std2 = np.std(image2)
+
+    # Assuming coordinates are homogeneous: T = [1/sigma^2 0 -u_x; 0 1/sigma^2 -u_y; 0 0 1]
 
     T1 = np.zeros((3, 3))
     T2 = np.zeros((3, 3))   
@@ -194,47 +192,15 @@ def find_rotation_translation(E):
             R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
             R.append(R_temp)
             R_det.append(np.linalg.det(R_temp))
-    
-<<<<<<< HEAD
-def find_rotation_translation():
-	E = np.matrix('-0.00310695,-0.0025646,2.96584;-0.028094,-0.00771621,56.3813;13.1905,-29.2007,-9999.79')
-	t = []
-	R = []
-	R_det = []
-	#+-90 degree rotation
-	RCW90_t = np.transpose(np.matrix('0,-1,0;1,0,0;0,0,1'))
-	RCCW90_t = np.transpose(np.matrix('0,1,0;-1,0,0;0,0,1'))
-
-	#SVD
-	U,Sig,V_t = np.linalg.svd(E)
-	U_t = np.transpose(U)
-
-	#t & R
-	sign = [1,-1]
-	rot = [RCW90_t,RCCW90_t]
-	for s in sign:
-		t.append(s*U[:,2])
-		for r in rot:
-			R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
-			R.append(R_temp)
-			R_det.append(np.linalg.det(R_temp))
-				
-	for i in range(0,2):
-		ind = R_det.index(max(R_det))
-		R_det.pop(ind)
-		R.pop(ind)
-	return R, t
-    
-=======
-    #Only keep R's with determinant of 1           
+    #Only keep R's with determinant of 
+    R_det = np.ndarray.tolist(np.array(R_det)-1)        
     for i in range(0,2):
-        ind = R_det.index(max(np.absolute(R_det - 1)))
+        ind = R_det.index(max(R_det))
         R_det.pop(ind)
         R.pop(ind)
     return R, t
 
 
->>>>>>> 3c173e57f0e2d94936afd58df7e0d6e8255a91ab
 def find_3d_points( K1, K2, R, t, x1, x2 ):
 
     # K1, K2, are the (3 x 3) camera matrices for the two cameras C1, C2
