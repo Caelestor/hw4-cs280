@@ -9,13 +9,11 @@ import scipy.misc
 import scipy.io
 import matplotlib.pyplot as plt
 
-
 def reconstruct_3d(name, plot=True):
     """
     Homework 2: 3D reconstruction from two Views
     This function takes as input the name of the image pairs (i.e. 'house' or
-    'library') and returns the 3D points as well as the camera matrices...but
-    some functions are missing.
+    'library') and returns the 3D points as well as the camera matrices
     """
 
     ## Load images, K matrices and matches
@@ -44,12 +42,13 @@ def reconstruct_3d(name, plot=True):
         ax.plot(np.array([matches[:, 0], matches[:, 2] + I1.shape[1]]), matches[:, [1, 3]].T, 'r')
 
     # compute the fundamental matrix
-    (F, res_err) = fundamental_matrix()
+    (F, res_err) = fundamental_matrix(matches)
     print('Residual in F = {}'.format(res_err))
 
     # compute the essential matrix
     E = np.dot(np.dot(K2.T, F), K1)
-
+    
+"""
     # compute the rotation and translation matrices
     (R, t) = find_rotation_translation()
 
@@ -87,3 +86,98 @@ def reconstruct_3d(name, plot=True):
     points = find_3d_points()
 
     plot_3d()
+    """
+
+""" We find the fundamental matrix using the 8-Point algorithm """
+    
+def fundamental_matrix(matches):
+
+    # Derive the normalization matrices
+    image1 = matches[:,0:2]
+    image2 = matches[:,2:4]
+    m1 = np.mean(image1, axis=0)
+    m2 = np.mean(image2, axis=0)       
+    std1 = np.std(image1)
+    std2 = np.std(image2)
+
+    T1 = np.zeros((3, 3))
+    T2 = np.zeros((3, 3))   
+    T1[0][0] = 1.0/(std1*std1)
+    T1[0][2] = -1*m1[0]
+    T1[1] = (0, 1.0/(std1*std1), -1*m1[1])
+    T1[2] = (0, 0, 1)
+    T2[0] = (1.0/(std2*std2), 0, -1*m2[0])
+    T2[1] = (0, 1.0/(std1*std1), -1*m2[1])
+    T2[2] = (0, 0, 1)
+
+    # Normalization
+
+    onecoords = np.ones((len(matches),1))   
+    image1 = np.append(image1, onecoords, axis=1)    
+    image2 = np.append(image2, onecoords, axis=1) 
+
+    image1 = np.dot(image1, T1.T)    
+    image2 = np.dot(image1, T1.T)      
+
+    """
+    m0 = np.mean(matches, axis=0)
+    m1 = np.mean(matches, axis=1)
+    m2 = np.mean(matches, axis=2)
+    m3 = np.mean(matches, axis=3)        
+
+    v0 = np.std(matches, axis=0)
+    v1 = np.std(matches, axis=1)
+    v2 = np.std(matches, axis=2)
+    v3 = np.std(matches, axis=3)  
+
+    v0 = v0*v0
+    v1 = v1*v1
+    v2 = v2*v2
+    v3 = v3*v3
+    """
+    
+    points = np.random.choice(len(matches), 20)
+    A = np.zeros((20, 9))
+    print points
+    n = 0
+
+    # Create the 8-point matrix
+
+    for i in points:
+        p1 = image1[i]
+        p2 = image2[i]
+        A[n] = [p1[0]*p2[0], p1[1]*p2[0], p2[0], p1[0]*p2[1], p1[1]*p1[0], p2[1], p1[0], p1[1], 1]
+        n = n + 1
+
+    # Use SVD to solve Af = 0. Given A = USV^T, the last column of V is the solution.
+    # http://www.cse.psu.edu/~rtc12/CSE486/lecture20_6pp.pdf 
+     
+    ua, sa, va = np.linalg.svd(A, full_matrices=True)    
+    f = va.T[:,-1]
+    f = np.reshape(f, (3, 3))
+
+    # Use SVD to reduce F to rank 2 and Denormalize
+
+    uf, sf, vf = np.linalg.svd(f, full_matrices=True)
+    sf[2] = 0
+    final = np.dot(np.dot(uf, np.diag(sf)),vf)
+    final = np.dot(T2.T, final, T1)
+    print final
+    #return (final, 0)   
+    
+    # Compute Residuals
+    residual = 0
+    for point in matches:
+        print point
+        p1 = np.matrix((point[0], point[1], 1))
+        p2 = np.matrix((point[2], point[3], 1))
+        numerator = np.linalg.norm(np.dot(np.dot(p2, final), p1.T), ord=1)
+        d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
+        d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
+        error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
+        residual = residual + error
+    return (final, residual)
+    
+    
+reconstruct_3d('house')
+#reconstruct_3d('library')
