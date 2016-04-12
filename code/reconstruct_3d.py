@@ -41,7 +41,8 @@ def reconstruct_3d(name, plot=True):
     
     # compute the rotation and translation matrices
     (R, t) = find_rotation_translation(E)
-
+    print('Rotation matrices = {}'.format(R))
+    print('Translation vectors = {}'.format(t))
     # Find R2 and t2 from R, t such that largest number of points lie in front
     # of the image planes of the two cameras
     P1 = np.dot(K1, np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1))
@@ -183,7 +184,7 @@ def find_rotation_translation(E):
             R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
             R.append(R_temp)
             R_det.append(np.linalg.det(R_temp))
-    #Only keep R's with determinant of 
+    #Only keep R's with determinant of 1
     R_det = np.ndarray.tolist(np.array(R_det)-1)        
     for i in range(0,2):
         ind = R_det.index(max(R_det))
@@ -253,7 +254,6 @@ def find_3d_points_final(K1, K2, P1, P2, matches):
     return X[:,:-1], np.sqrt(esq)
 
 def plot_3d(K1, K2, R, t, X):
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     n = np.shape(X)[0]
@@ -262,7 +262,7 @@ def plot_3d(K1, K2, R, t, X):
 
     # Camera 1
     ax.scatter(0,0,0,c='r') 
-    f1 = K1[0,0]
+    f1 = 1
     ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
 
     #Camera 2
