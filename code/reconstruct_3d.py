@@ -171,7 +171,38 @@ def fundamental_matrix(matches):
         error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
         residual = residual + error
     return (final, residual)
+
+def find_rotation_translation(E):
+
+    t = []
+    R = []
+    R_det = []
+    #+-90 degree rotation matrices
+    RCW90_t = np.transpose(np.matrix('0,-1,0;1,0,0;0,0,1'))
+    RCCW90_t = np.transpose(np.matrix('0,1,0;-1,0,0;0,0,1'))
+
+    #SVD
+    U,Sig,V_t = np.linalg.svd(E)
+    U_t = np.transpose(U)
+
+    #t & R
+    sign = [1,-1]
+    rot = [RCW90_t,RCCW90_t]
+    for s in sign:
+        t.append(s*U[:,2])
+        for r in rot:
+            R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
+            R.append(R_temp)
+            R_det.append(np.linalg.det(R_temp))
     
+    #Only keep R's with determinant of 1           
+    for i in range(0,2):
+        ind = R_det.index(max(np.absolute(R_det - 1)))
+        R_det.pop(ind)
+        R.pop(ind)
+    return R, t
+
+
 def find_3d_points( K1, K2, R, t, x1, x2 ):
 
     # K1, K2, are the (3 x 3) camera matrices for the two cameras C1, C2
