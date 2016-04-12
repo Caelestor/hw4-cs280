@@ -3,6 +3,7 @@ import numpy as np
 import scipy.misc
 import scipy.io
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 def reconstruct_3d(name, plot=True):
     
@@ -74,7 +75,8 @@ def reconstruct_3d(name, plot=True):
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
 
     # compute the 3D points with the final P2
-    points = find_3d_points(K1,K2,R2,t2,matches)
+    (points, err) = find_3d_points_final(K1,K2,R2,t2,P1,P2, matches)
+    print err
 
     plot_3d(K1,K2,R,t,points)
 
@@ -113,7 +115,6 @@ def fundamental_matrix(matches):
     
     points = np.random.choice(len(matches), 8)
     A = np.zeros((8, 9))
-    print points
     n = 0
 
     # Create the 8-point matrix
@@ -137,7 +138,7 @@ def fundamental_matrix(matches):
     sf[2] = 0
     final = np.dot(np.dot(uf, np.diag(sf)),vf)
     final = np.dot(T2.T, final, T1)
-    print final
+    #print final
     #return (final, 0)   
     
     # Compute Residuals
@@ -149,8 +150,9 @@ def fundamental_matrix(matches):
         d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
         d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
         error = numerator/(d1*d1) + numerator/(d2*d2)
-        print numerator, d1, d2, error
+        #print numerator, d1, d2, error
         residual = residual + error
+    print(np.mean(residual))
     return (final, residual/(2*len(matches)))
 
 def find_rotation_translation(E):
@@ -221,6 +223,29 @@ def find_3d_points( K1, K2, R, t, matches ):
 
     return X[:,:-1], np.sqrt(esq)/N
 
+def find_3d_points_final(K1, K2, R, t, P1, P2, matches):
+    x1 = matches[:,0:2]
+    x2 = matches[:,2:4]
+
+    N = len(x1)
+
+    X = np.zeros((N,4)) #Set of 3D points to be triangulatd in homogenous coords
+    esq = 0 #Total error squared
+    for i in range(N):
+
+        # Solving for Af = 0
+        A1 = np.outer([x1[i]], P1[2]) - P1[:2]
+        A2 = np.outer([x2[i]], P2[2]) - P2[:2]
+        A = np.vstack((A1,A2))
+        U, S, V = np.linalg.svd( A )
+        X[i] = V[-1]/V[-1,-1]
+
+        e1 = np.linalg.norm(np.dot(A1, X[i])/np.dot(P1[2], X[i]))
+        e2 = np.linalg.norm(np.dot(A2, X[i])/np.dot(P2[2], X[i]))
+        esq = e1**2 + e2**2
+
+    return X[:,:-1], np.sqrt(esq)
+
 def plot_3d(K1, K2, R, t, X):
 
     fig = plt.figure()
@@ -235,9 +260,9 @@ def plot_3d(K1, K2, R, t, X):
     ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
 
     # Camera 2
-    C = -np.dot(R.T, t)
-    ax.scatter(C[0],C[1],C[2],c='r') 
-    ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
+    # C = -np.dot(np.transpose(R), t)
+    # ax.scatter(C[0],C[1],C[2],c='r') 
+    # ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
