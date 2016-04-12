@@ -10,12 +10,7 @@ import scipy.io
 import matplotlib.pyplot as plt
 
 def reconstruct_3d(name, plot=True):
-    """
-    Homework 2: 3D reconstruction from two Views
-    This function takes as input the name of the image pairs (i.e. 'house' or
-    'library') and returns the 3D points as well as the camera matrices
-    """
-
+    
     ## Load images, K matrices and matches
     data_dir = os.path.join('..', 'data', name)
 
@@ -168,7 +163,6 @@ def fundamental_matrix(matches):
     # Compute Residuals
     residual = 0
     for point in matches:
-        print point
         p1 = np.matrix((point[0], point[1], 1))
         p2 = np.matrix((point[2], point[3], 1))
         numerator = np.linalg.norm(np.dot(np.dot(p2, final), p1.T), ord=1)
@@ -178,6 +172,64 @@ def fundamental_matrix(matches):
         residual = residual + error
     return (final, residual)
     
+def find_3d_points( K1, K2, R, t, x1, x2 ):
+
+    # K1, K2, are the (3 x 3) camera matrices for the two cameras C1, C2
+    # R is the (3 x 3) rotation matrix describing the rotation from C2 to C1
+    # t = (x_0, y_0, z_0) is the translation vector denoting the position of C1 in C2's coordinate
+    # x1, x2 are (N x 2) arrays denoting the the position of reference points in each of the two images
+
+    # Camera matrix for first camera with rotation and translation being the identity
+    I0 = np.hstack( (np.identity(3), np.zeros((3,1)) ) ) 
+    P1 = np.dot(K1, I0)
+
+    # Camera matrix for the second matrix.
+    Rt = np.hstack((R,t)) 
+    P2 = np.dot(K2, Rt)
+
+    N = len(x1) #Number of points
+
+    X = np.zeros((N,4)) #Set of 3D points to be triangulatd in homogenous coords
+    esq = 0 #Total error squared
+    for i in range(N):
+
+        # Solving for Af = 0
+        A1 = np.outer([x1[i]], P1[2]) - P1[:2]
+        A2 = np.outer([x2[i]], P2[2]) - P2[:2]
+        A = np.vstack((A1,A2))
+        U, S, V = np.linalg.svd( A )
+        X[i] = V[-1]/V[-1,-1]
+
+        # Adding up erorr
+        e1 = np.linalg.norm(np.dot(A1, X[i])/np.dot(P1[2], X[i]))
+        e2 = np.linalg.norm(np.dot(A2, X[i])/np.dot(P2[2], X[i]))
+        esq = e1**2 + e2**2
+
+    return X[:,:-1], np.sqrt(esq)/N
+
+def plot_3d(K1, K2, R, t, X):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    n = np.shape(X)[0]
+
+    ax.scatter(X[:,0], X[:,1], X[:,2]) #Plot points
+
+    # Camera 1
+    ax.scatter(0,0,0,c='r') 
+    f1 = K1[0,0]
+    ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
+
+    # Camera 2
+    C = -np.dot(R.T, t)
+    ax.scatter(C[0],C[1],C[2],c='r') 
+    ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    plt.show()
     
 reconstruct_3d('house')
 #reconstruct_3d('library')
