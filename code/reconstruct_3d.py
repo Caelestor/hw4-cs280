@@ -111,8 +111,8 @@ def fundamental_matrix(matches):
     image1 = np.dot(image1, T1.T)    
     image2 = np.dot(image1, T1.T)      
     
-    points = np.random.choice(len(matches), 8)
-    A = np.zeros((8, 9))
+    points = np.random.choice(len(matches), 20)
+    A = np.zeros((20, 9))
     print points
     n = 0
 
@@ -131,7 +131,8 @@ def fundamental_matrix(matches):
     f = va.T[:,-1]
     f = np.reshape(f, (3, 3))
 
-    # Use SVD to reduce F to rank 2 and Denormalize
+    # Use SVD to reduce f to rank 2 and Denormalize
+    # final is the rank-2 Fundamental matrix
 
     uf, sf, vf = np.linalg.svd(f, full_matrices=True)
     sf[2] = 0
@@ -148,10 +149,11 @@ def fundamental_matrix(matches):
         numerator = np.abs(np.dot(np.dot(p2, final), p1.T))
         d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
         d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
-        error = numerator/(d1*d1) + numerator/(d2*d2)
-        print numerator, d1, d2, error
-        residual = residual + error
-    return (final, residual/(2*len(matches)))
+        error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
+        #print numerator, d1, d2, error
+        residual += error
+    residual /= 2*len(matches)
+    return (final, residual)
 
 def find_rotation_translation(E):
 
@@ -244,4 +246,4 @@ def plot_3d(K1, K2, R, t, X):
     plt.show()
     
 reconstruct_3d('house')
-#reconstruct_3d('library')
+reconstruct_3d('library')
