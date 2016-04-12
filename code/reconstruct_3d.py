@@ -43,10 +43,10 @@ def reconstruct_3d(name, plot=True):
     # compute the essential matrix
     E = np.dot(np.dot(K2.T, F), K1)
     
-"""
-    # compute the rotation and translation matrices
-    (R, t) = find_rotation_translation()
 
+    # compute the rotation and translation matrices
+    (R, t) = find_rotation_translation(E)
+"""
     # Find R2 and t2 from R, t such that largest number of points lie in front
     # of the image planes of the two cameras
     P1 = np.dot(K1, np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1))
@@ -194,10 +194,10 @@ def find_rotation_translation(E):
             R_temp = s*np.transpose(np.dot(np.dot(U,r),V_t))
             R.append(R_temp)
             R_det.append(np.linalg.det(R_temp))
-    
-    #Only keep R's with determinant of 1           
+    #Only keep R's with determinant of 
+    R_det = np.ndarray.tolist(np.array(R_det)-1)        
     for i in range(0,2):
-        ind = R_det.index(max(np.absolute(R_det - 1)))
+        ind = R_det.index(max(R_det))
         R_det.pop(ind)
         R.pop(ind)
     return R, t
