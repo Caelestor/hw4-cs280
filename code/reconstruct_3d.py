@@ -74,10 +74,10 @@ def reconstruct_3d(name, plot=True):
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
 
     # compute the 3D points with the final P2
-    (points, err) = find_3d_points_final(K1,K2,R2,t2,P1,P2, matches)
+    (points, err) = find_3d_points_final(K1,K2,P1,P2, matches)
     print err
 
-    plot_3d(K1,K2,R,t,points)
+    plot_3d(K1,K2,R2,t2,points)
     
 
 """ We find the fundamental matrix using the 8-Point algorithm """
@@ -229,7 +229,7 @@ def find_3d_points( K1, K2, R, t, matches ):
 
     return X[:,:-1], np.sqrt(esq)/N
 
-def find_3d_points_final(K1, K2, R, t, P1, P2, matches):
+def find_3d_points_final(K1, K2, P1, P2, matches):
     x1 = matches[:,0:2]
     x2 = matches[:,2:4]
 
@@ -265,10 +265,10 @@ def plot_3d(K1, K2, R, t, X):
     f1 = K1[0,0]
     ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
 
-    # Camera 2
-    # C = -np.dot(np.transpose(R), t)
-    # ax.scatter(C[0],C[1],C[2],c='r') 
-    # ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
+    #Camera 2
+    C = -np.dot(np.transpose(R), t)
+    ax.scatter(C[0],C[1],C[2],c='r') 
+    ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
