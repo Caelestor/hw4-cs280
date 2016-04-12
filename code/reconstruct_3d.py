@@ -95,12 +95,11 @@ def fundamental_matrix(matches):
 
     T1 = np.zeros((3, 3))
     T2 = np.zeros((3, 3))   
-    T1[0][0] = 1.0/(std1*std1)
-    T1[0][2] = -1*m1[0]
+    T1[0] = (1.0/(std1*std1), 0, -1*m1[0])
     T1[1] = (0, 1.0/(std1*std1), -1*m1[1])
     T1[2] = (0, 0, 1)
     T2[0] = (1.0/(std2*std2), 0, -1*m2[0])
-    T2[1] = (0, 1.0/(std1*std1), -1*m2[1])
+    T2[1] = (0, 1.0/(std2*std2), -1*m2[1])
     T2[2] = (0, 0, 1)
 
     # Normalization
@@ -111,26 +110,9 @@ def fundamental_matrix(matches):
 
     image1 = np.dot(image1, T1.T)    
     image2 = np.dot(image1, T1.T)      
-
-    """
-    m0 = np.mean(matches, axis=0)
-    m1 = np.mean(matches, axis=1)
-    m2 = np.mean(matches, axis=2)
-    m3 = np.mean(matches, axis=3)        
-
-    v0 = np.std(matches, axis=0)
-    v1 = np.std(matches, axis=1)
-    v2 = np.std(matches, axis=2)
-    v3 = np.std(matches, axis=3)  
-
-    v0 = v0*v0
-    v1 = v1*v1
-    v2 = v2*v2
-    v3 = v3*v3
-    """
     
-    points = np.random.choice(len(matches), 20)
-    A = np.zeros((20, 9))
+    points = np.random.choice(len(matches), 8)
+    A = np.zeros((8, 9))
     print points
     n = 0
 
@@ -163,12 +145,13 @@ def fundamental_matrix(matches):
     for point in matches:
         p1 = np.matrix((point[0], point[1], 1))
         p2 = np.matrix((point[2], point[3], 1))
-        numerator = np.linalg.norm(np.dot(np.dot(p2, final), p1.T), ord=1)
+        numerator = np.abs(np.dot(np.dot(p2, final), p1.T))
         d1 = np.linalg.norm(np.dot(final, p1.T), ord=2)
         d2 = np.linalg.norm(np.dot(final, p2.T), ord=2)
-        error = numerator*numerator*(1.0/(d1*d1) + 1.0/(d2*d2))
+        error = numerator/(d1*d1) + numerator/(d2*d2)
+        print numerator, d1, d2, error
         residual = residual + error
-    return (final, residual)
+    return (final, residual/(2*len(matches)))
 
 def find_rotation_translation(E):
 
