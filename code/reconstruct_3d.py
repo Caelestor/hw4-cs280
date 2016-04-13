@@ -75,8 +75,10 @@ def reconstruct_3d(name, plot=True):
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
     
     # compute the 3D points with the final P2
-    (points, err) = find_3d_points_final(K1,K2,P1,P2, matches)
-    print err
+    (points, err) = find_3d_points(K1,K2,R2,t2, matches)
+    #print err
+    
+    #print points
 
     plot_3d(K1,K2,R2,t2,points)
     
@@ -93,10 +95,9 @@ def fundamental_matrix(matches):
     m2 = np.mean(image2, axis=0)       
     std1 = np.std(image1)
     std2 = np.std(image2)
-    
-    print len(matches)
 
-    # Assuming coordinates are homogeneous: T = [1/sigma^2 0 -u_x; 0 1/sigma^2 -u_y; 0 0 1]
+    # Assuming coordinates are homogeneous
+    # T = [1/sigma 0 -u_x/sigma; 0 1/sigma -u_y/gisma; 0 0 1]
 
     T1 = np.zeros((3, 3))
     T2 = np.zeros((3, 3))   
@@ -141,10 +142,9 @@ def fundamental_matrix(matches):
 
     uf, sf, vf = np.linalg.svd(f, full_matrices=True)
     sf[2] = 0
-    #print "diagonal matrix", np.diag(sf)
     final = np.dot(np.dot(uf, np.diag(sf)),vf)
     final = np.dot(np.dot(T2.T, final), T1)
-    #print "fundamental matrix", final 
+    print "fundamental matrix", final 
     
     # Compute Residuals
     residual = 0
@@ -173,9 +173,17 @@ def find_rotation_translation(E):
     RCW90_t = np.transpose(np.matrix('0,-1,0;1,0,0;0,0,1'))
     RCCW90_t = np.transpose(np.matrix('0,1,0;-1,0,0;0,0,1'))
 
+    W=np.matrix('0, -1, 0; 1, 0, 0; 0, 0, 1')
+
     #SVD
     U,Sig,V_t = np.linalg.svd(E)
-    U_t = np.transpose(U)
+    #U_t = np.transpose(U)
+
+
+    # the 4 solutions
+    R1 = np.dot(np.dot(U, W), V_t)
+    R2 = np.dot(np.dot(U, W.T), V_t)
+    u = np.matrix(U[:,-1])
 
     #t & R
     sign = [1,-1]
@@ -192,8 +200,20 @@ def find_rotation_translation(E):
         ind = R_det.index(max(R_det))
         R_det.pop(ind)
         R.pop(ind)
-    return R, t
 
+    """ 
+    t.append(u)
+    t.append(-1*u)
+    R.append(R1)
+    R.append(R2)  
+    """
+    
+    #print "whatR", R
+    #print "whatT", t
+    #print "mineR", [R1, R2]
+    #print "mineT", [u, -1*u]
+    return R, t
+    #return [R1, R2], [u, -1*u]
 
 def find_3d_points( K1, K2, R, t, matches ):
 
@@ -265,12 +285,12 @@ def plot_3d(K1, K2, R, t, X):
     # Camera 1
     ax.scatter(0,0,0,c='r') 
     f1 = 1
-    ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
+    #ax.quiver(0,0,0,0,0,1,length=f1,pivot='tail')
 
     #Camera 2
     C = -np.dot(np.transpose(R), t)
     ax.scatter(C[0],C[1],C[2],c='r') 
-    ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
+    #ax.quiver(C[0],C[1],C[2],R[2,0],R[2,1],R[2,2],length=f1,pivot='tail')
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -278,5 +298,7 @@ def plot_3d(K1, K2, R, t, X):
 
     plt.show()
     
+print "house"
 reconstruct_3d('house')
+print "libary"
 reconstruct_3d('library')
