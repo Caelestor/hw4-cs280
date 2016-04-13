@@ -185,7 +185,7 @@ def find_rotation_translation(E):
     R2 = np.dot(np.dot(U, W.T), V_t)
     u = np.matrix(U[:,-1])
 
-    """
+    
     #t & R
     sign = [1,-1]
     rot = [RCW90_t,RCCW90_t]
@@ -196,6 +196,7 @@ def find_rotation_translation(E):
             R.append(R_temp)
             R_det.append(np.linalg.det(R_temp))
     #Only keep R's with determinant of 1
+    """
     R_det = np.ndarray.tolist(np.array(R_det)-1)        
     for i in range(0,2):
         ind = R_det.index(max(R_det))
@@ -206,6 +207,7 @@ def find_rotation_translation(E):
     t.append(-1*u)
     R.append(R1)
     R.append(R2)  
+    
     
     print "whatR", R
     print "mineR", [R1, R2]
