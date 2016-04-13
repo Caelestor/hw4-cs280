@@ -185,6 +185,7 @@ def find_rotation_translation(E):
     R2 = np.dot(np.dot(U, W.T), V_t)
     u = np.matrix(U[:,-1])
 
+    """
     #t & R
     sign = [1,-1]
     rot = [RCW90_t,RCCW90_t]
@@ -201,19 +202,19 @@ def find_rotation_translation(E):
         R_det.pop(ind)
         R.pop(ind)
 
-    """ 
     t.append(u)
     t.append(-1*u)
     R.append(R1)
     R.append(R2)  
-    """
     
-    #print "whatR", R
-    #print "whatT", t
-    #print "mineR", [R1, R2]
-    #print "mineT", [u, -1*u]
-    return R, t
-    #return [R1, R2], [u, -1*u]
+    print "whatR", R
+    print "mineR", [R1, R2]
+    
+    print "whatT", t
+    print "mineT", [u, -1*u]
+    #return R, t
+    """
+    return [R1, R2], t
 
 def find_3d_points( K1, K2, R, t, matches ):
 
