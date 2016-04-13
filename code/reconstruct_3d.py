@@ -78,7 +78,7 @@ def reconstruct_3d(name, plot=True):
     (points, err) = find_3d_points_final(K1,K2,R2,t2,P1,P2, matches)
     print err, err/len(matches)
 
-#    plot_3d(K1,K2,R,t,points)
+    plot_3d(K1,K2,R,t,points)
     
 
 """ We find the fundamental matrix using the 8-Point algorithm """
