@@ -73,13 +73,12 @@ def reconstruct_3d(name, plot=True):
     R2 = R[ri[j]]
     P2 = np.dot(K2, np.concatenate([R2, t2[:, 0]], axis=1))
 
-    """
+    
     # compute the 3D points with the final P2
     (points, err) = find_3d_points_final(K1,K2,R2,t2,P1,P2, matches)
-    print err
+    print err, err/len(matches)
 
-    plot_3d(K1,K2,R,t,points)
-    """
+#    plot_3d(K1,K2,R,t,points)
     
 
 """ We find the fundamental matrix using the 8-Point algorithm """
@@ -94,6 +93,8 @@ def fundamental_matrix(matches):
     m2 = np.mean(image2, axis=0)       
     std1 = np.std(image1)
     std2 = np.std(image2)
+    
+    print len(matches)
 
     # Assuming coordinates are homogeneous: T = [1/sigma^2 0 -u_x; 0 1/sigma^2 -u_y; 0 0 1]
 
@@ -140,9 +141,10 @@ def fundamental_matrix(matches):
 
     uf, sf, vf = np.linalg.svd(f, full_matrices=True)
     sf[2] = 0
+    #print "diagonal matrix", np.diag(sf)
     final = np.dot(np.dot(uf, np.diag(sf)),vf)
-    final = np.dot(T2.T, final, T1)
-    print final 
+    final = np.dot(np.dot(T2.T, final), T1)
+    #print "fundamental matrix", final 
     
     # Compute Residuals
     residual = 0
@@ -160,6 +162,9 @@ def fundamental_matrix(matches):
     return (final, residual)
 
 def find_rotation_translation(E):
+
+    ue, se, ve = np.linalg.svd(E, full_matrices=True)   
+    print "essential matrix", se
 
     t = []
     R = []
